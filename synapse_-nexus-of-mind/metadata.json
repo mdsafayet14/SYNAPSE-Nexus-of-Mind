@@ -1,0 +1,6 @@
+{
+  "name": "SYNAPSE: Nexus of Mind",
+  "description": "Minimalist cross-platform cognitive brain-training game and architectural blueprint featuring 1000 levels across 5 mental pillars.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
