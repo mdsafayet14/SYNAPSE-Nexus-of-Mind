@@ -17,6 +17,31 @@ export interface TierBandConfig {
 
 export type TargetType = 'math' | 'logic' | 'memory' | 'spatial';
 
+export type ShapeKind =
+  | 'circle'
+  | 'triangle'
+  | 'square'
+  | 'pentagon'
+  | 'hexagon'
+  | 'diamond'
+  | 'star'
+  | 'cross';
+
+export interface ShapeGlyphConfig {
+  kind: ShapeKind;
+  fill?: 'solid' | 'outline';
+  rotation?: number;
+  count?: number;
+  color?: string;
+}
+
+export interface PatternToken {
+  text?: string;
+  subtext?: string;
+  shape?: ShapeGlyphConfig;
+  isMissing?: boolean;
+}
+
 export interface TargetChoice {
   id: string;
   label: string;
@@ -26,6 +51,7 @@ export interface TargetChoice {
     grid?: number[][];
     rotation?: number;
   };
+  shape?: ShapeGlyphConfig;
 }
 
 export interface LevelTarget {
@@ -42,11 +68,10 @@ export interface LevelTarget {
     sequence: number[];
     pulseMs: number;
   };
-  logicVisual?: {
-    gateLabel: string;
-    inputs: { name: string; value: boolean }[];
-    secondaryGate?: string;
-    thirdInput?: { name: string; value: boolean };
+  patternVisual?: {
+    subLabel: string;
+    mode: 'series' | 'odd_one_out';
+    tokens?: PatternToken[];
   };
   spatialVisual?: {
     ruleHint: string;

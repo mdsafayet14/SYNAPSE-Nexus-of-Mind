@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { LevelTarget, TargetStatus } from '../types/synapse';
+import { LevelTarget, ShapeGlyphConfig, TargetStatus } from '../types/synapse';
 import {
   generateTenTargetsForLevel,
   getBandForLevel,
@@ -95,6 +95,107 @@ const SpatialGlyph: React.FC<{
         ))
       )}
     </div>
+  );
+};
+
+const PIP_POSITIONS: Record<number, [number, number][]> = {
+  1: [[24, 24]],
+  2: [
+    [19, 19],
+    [29, 29]
+  ],
+  3: [
+    [24, 17],
+    [18, 28],
+    [30, 28]
+  ],
+  4: [
+    [19, 19],
+    [29, 19],
+    [19, 29],
+    [29, 29]
+  ],
+  5: [
+    [18, 18],
+    [30, 18],
+    [24, 24],
+    [18, 30],
+    [30, 30]
+  ],
+  6: [
+    [19, 17],
+    [29, 17],
+    [19, 24],
+    [29, 24],
+    [19, 31],
+    [29, 31]
+  ]
+};
+
+const PatternShapeGlyph: React.FC<{
+  shape: ShapeGlyphConfig;
+  size?: 'sm' | 'md';
+  accentColor?: string;
+}> = ({ shape, size = 'md', accentColor = '#38BDF8' }) => {
+  const color = shape.color || accentColor;
+  const isSolid = shape.fill !== 'outline';
+  const fillVal = isSolid ? color : 'transparent';
+  const fillOpacity = isSolid ? 0.88 : 1;
+  const rot = shape.rotation || 0;
+  const pips = shape.count ? PIP_POSITIONS[Math.min(6, Math.max(1, shape.count))] : null;
+
+  const renderShapePath = () => {
+    switch (shape.kind) {
+      case 'circle':
+        return <circle cx="24" cy="24" r="16" />;
+      case 'triangle':
+        return <polygon points="24,6 42,39 6,39" />;
+      case 'square':
+        return <rect x="8" y="8" width="32" height="32" rx="3" />;
+      case 'diamond':
+        return <polygon points="24,6 42,24 24,42 6,24" />;
+      case 'pentagon':
+        return <polygon points="24,6 41,18 35,39 13,39 7,18" />;
+      case 'hexagon':
+        return <polygon points="24,6 40,15 40,33 24,42 8,33 8,15" />;
+      case 'star':
+        return (
+          <polygon points="24,5 29.2,16.5 42,18 32.5,26.8 35,39.5 24,33.2 13,39.5 15.5,26.8 6,18 18.8,16.5" />
+        );
+      case 'cross':
+        return (
+          <polygon points="19,7 29,7 29,19 41,19 41,29 29,29 29,41 19,41 19,29 7,29 7,19 19,19" />
+        );
+    }
+  };
+
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      className={size === 'sm' ? 'w-9 h-9' : 'w-11 h-11 sm:w-12 sm:h-12'}
+      aria-hidden="true"
+    >
+      <g
+        transform={`rotate(${rot} 24 24)`}
+        fill={fillVal}
+        fillOpacity={fillOpacity}
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      >
+        {renderShapePath()}
+      </g>
+      {pips &&
+        pips.map(([cx, cy], idx) => (
+          <circle
+            key={idx}
+            cx={cx}
+            cy={cy}
+            r="2.2"
+            fill={isSolid ? '#03060c' : '#F8FAFC'}
+          />
+        ))}
+    </svg>
   );
 };
 
@@ -605,44 +706,50 @@ export const LevelArena: React.FC<LevelArenaProps> = ({
             </h3>
           </div>
 
-          {/* MATH & LOGIC */}
+          {/* MATH & PATTERN LOGIC */}
           {(currentTarget.type === 'math' || currentTarget.type === 'logic') && (
             <div className="flex flex-col items-center gap-3 sm:gap-4">
-              {currentTarget.logicVisual && (
-                <div className="flex flex-wrap items-center justify-center gap-2 p-2.5 rounded-xl bg-black/35 border border-white/[0.06] font-mono text-[11px]">
-                  {currentTarget.logicVisual.inputs.map((inp) => (
-                    <span
-                      key={inp.name}
-                      className={`px-2 py-0.5 rounded border ${
-                        inp.value
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                          : 'border-white/10 bg-white/5 text-slate-400'
-                      }`}
-                    >
-                      {inp.name}:{inp.value ? '1' : '0'}
-                    </span>
-                  ))}
-                  <span className="px-2.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
-                    {currentTarget.logicVisual.gateLabel}
+              {currentTarget.patternVisual && (
+                <div className="w-full flex flex-col items-center gap-2">
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {currentTarget.patternVisual.subLabel}
                   </span>
-                  {currentTarget.logicVisual.secondaryGate && currentTarget.logicVisual.thirdInput && (
-                    <>
-                      <span className="text-slate-500">→</span>
-                      <span
-                        className={`px-2 py-0.5 rounded border ${
-                          currentTarget.logicVisual.thirdInput.value
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                            : 'border-white/10 bg-white/5 text-slate-400'
-                        }`}
-                      >
-                        {currentTarget.logicVisual.thirdInput.name}:
-                        {currentTarget.logicVisual.thirdInput.value ? '1' : '0'}
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300 font-bold">
-                        {currentTarget.logicVisual.secondaryGate}
-                      </span>
-                    </>
-                  )}
+
+                  {currentTarget.patternVisual.mode === 'series' &&
+                    currentTarget.patternVisual.tokens && (
+                      <div className="w-full py-3 sm:py-4 px-2.5 sm:px-4 rounded-2xl bg-[#04070f] border border-white/[0.08] flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                        {currentTarget.patternVisual.tokens.map((tok, idx) => (
+                          <React.Fragment key={idx}>
+                            {idx > 0 && (
+                              <span
+                                className="text-slate-600 font-mono text-xs sm:text-sm select-none"
+                                aria-hidden="true"
+                              >
+                                →
+                              </span>
+                            )}
+                            <div
+                              className={`min-w-[44px] sm:min-w-[54px] min-h-[44px] sm:min-h-[54px] px-2.5 py-1.5 rounded-xl border flex items-center justify-center ${
+                                tok.isMissing
+                                  ? 'border-dashed border-cyan-400/60 bg-cyan-500/10 text-cyan-300'
+                                  : 'border-white/10 bg-white/[0.04] text-white'
+                              }`}
+                            >
+                              {tok.shape ? (
+                                <PatternShapeGlyph
+                                  shape={tok.shape}
+                                  accentColor={band.accentColor}
+                                />
+                              ) : (
+                                <span className="font-mono font-bold text-sm sm:text-lg tabular-nums whitespace-nowrap">
+                                  {tok.text || '?'}
+                                </span>
+                              )}
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
                 </div>
               )}
 
@@ -654,44 +761,64 @@ export const LevelArena: React.FC<LevelArenaProps> = ({
                 </div>
               )}
 
-              <div
-                className={`w-full grid gap-2.5 ${
+              {(() => {
+                const hasShapeChoices = currentTarget.choices?.some((c) => Boolean(c.shape));
+                const hasLongLabels = currentTarget.choices?.some((c) => c.label.length > 7);
+                const gridCols =
                   currentTarget.choices && currentTarget.choices.length === 2
                     ? 'grid-cols-2'
-                    : 'grid-cols-2 sm:grid-cols-4'
-                }`}
-              >
-                {currentTarget.choices?.map((opt, idx) => {
-                  const isSel = feedback?.selectedValue === opt.value;
-                  const isRight = opt.value === currentTarget.correctValue;
+                    : hasLongLabels && !hasShapeChoices
+                    ? 'grid-cols-2'
+                    : 'grid-cols-2 sm:grid-cols-4';
 
-                  let cls =
-                    'bg-white/[0.04] hover:bg-cyan-500/15 border-white/10 hover:border-cyan-400/50 text-white';
-                  if (feedback) {
-                    if (isRight) {
-                      cls = 'bg-emerald-500/20 border-emerald-400 text-emerald-300';
-                    } else if (isSel && !feedback.isCorrect) {
-                      cls = 'bg-rose-500/20 border-rose-400 text-rose-300';
-                    } else {
-                      cls = 'bg-white/[0.02] border-white/5 text-slate-500 opacity-50';
-                    }
-                  }
+                return (
+                  <div className={`w-full grid gap-2.5 ${gridCols}`}>
+                    {currentTarget.choices?.map((opt, idx) => {
+                      const isSel = feedback?.selectedValue === opt.value;
+                      const isRight = opt.value === currentTarget.correctValue;
 
-                  return (
-                    <button
-                      key={opt.id}
-                      disabled={Boolean(feedback)}
-                      onClick={() => handleSelectChoice(opt.value)}
-                      className={`min-h-[48px] py-3 px-3 rounded-xl border font-mono font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${cls}`}
-                    >
-                      <span className="text-[10px] text-slate-500 font-normal hidden sm:inline">
-                        [{idx + 1}]
-                      </span>
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      let cls =
+                        'bg-white/[0.04] hover:bg-cyan-500/15 border-white/10 hover:border-cyan-400/50 text-white';
+                      if (feedback) {
+                        if (isRight) {
+                          cls = 'bg-emerald-500/20 border-emerald-400 text-emerald-300';
+                        } else if (isSel && !feedback.isCorrect) {
+                          cls = 'bg-rose-500/20 border-rose-400 text-rose-300';
+                        } else {
+                          cls = 'bg-white/[0.02] border-white/5 text-slate-500 opacity-50';
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={opt.id}
+                          disabled={Boolean(feedback)}
+                          onClick={() => handleSelectChoice(opt.value)}
+                          className={`min-h-[48px] py-2.5 px-3 rounded-xl border font-mono font-bold text-sm sm:text-base transition-all flex ${
+                            opt.shape ? 'flex-col gap-1.5' : 'flex-row gap-1.5'
+                          } items-center justify-center cursor-pointer active:scale-95 ${cls}`}
+                        >
+                          {opt.shape && (
+                            <PatternShapeGlyph
+                              shape={opt.shape}
+                              size="sm"
+                              accentColor={band.accentColor}
+                            />
+                          )}
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 font-normal hidden sm:inline">
+                              [{idx + 1}]
+                            </span>
+                            <span className={opt.shape ? 'text-xs font-semibold' : ''}>
+                              {opt.label}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
