@@ -163,7 +163,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   Engineering & Game Design
                 </span>
                 <h3 className="text-xl font-extrabold text-white tracking-tight">
-                  Developed by Safayet
+                  Developed by Shafayet
                 </h3>
                 <p className="text-slate-400 text-xs">
                   Lead Game Architect, Senior UI/UX Designer & Full-Stack Systems Engineer.
